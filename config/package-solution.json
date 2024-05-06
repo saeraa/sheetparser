@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "sheetparser-client-side-solution",
+    "id": "9504cd89-eaa7-4b60-abd9-19d3bcfac1aa",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.19.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "sheetparser description"
+      },
+      "longDescription": {
+        "default": "sheetparser description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "sheetparser Feature",
+        "description": "The feature that activates elements of the sheetparser solution.",
+        "id": "6bed5726-62ee-449e-990e-1bbcfc7c1ace",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/sheetparser.sppkg"
+  }
+}
