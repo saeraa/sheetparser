@@ -21,16 +21,28 @@ export const Upload: React.FunctionComponent<IUploadProps> = ({
     inputRef.current?.click();
   }
 
+  const handleDrop = (event: React.DragEvent): void => {
+    event.preventDefault();
+    const droppedFiles = event.dataTransfer.files;
+    if (droppedFiles.length > 0) {
+      setFile(droppedFiles[0]);
+    }
+  };
+
   return (
-    <div>
+    <>
       <input
         ref={inputRef}
         style={{ display: "none" }}
+        aria-label="upload file for validation"
         type="file"
         accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
         onChange={handleFileChange}
+        id="fileInput"
       />
-      <UploadButton onClick={clickUpload} />
-    </div>
+      <label htmlFor="fileInput">
+        <UploadButton onClick={clickUpload} onDrop={handleDrop} />
+      </label>
+    </>
   );
 };

@@ -1,11 +1,5 @@
 import * as XLSX from "@e965/xlsx";
 
-//import * as fs from "fs";
-
-//import path from "path";
-
-//XLSX.set_fs(fs);
-
 interface IColumnSpec {
   name: string;
   type: string; // 'string', 'number', or a regex pattern
@@ -21,7 +15,7 @@ interface IJsonSpec {
 }
 
 interface IResponse {
-  file: File;
+  file: File | undefined;
   success: boolean;
   errors: string[];
 }
@@ -31,7 +25,7 @@ function isValidType(value: string | number, type: string): boolean {
   if (type === "string") {
     return typeof value === "string";
   } else if (type === "number") {
-    return typeof value === "number" && !isNaN(value);
+    return !isNaN(+value);
   } else if (
     typeof value === "string" &&
     type.startsWith("/") &&
@@ -58,16 +52,28 @@ async function processFile(
   };
 
   // Checking file extension
-  const extension = inputFile.type;
+  //const extension = inputFile.type;
   //const extension = path.extname(inputFile).toLowerCase();
 
-  if (extension === ".xlsx") {
-    // Read the Excel file
-    const workbook = XLSX.read(inputFile, {
-      type: "file",
+  const name = inputFile.name;
+  const lastDot = name.lastIndexOf(".");
+
+  //const fileName = name.substring(0, lastDot);
+  const extension = name.substring(lastDot + 1);
+
+  if (extension === "xlsx" || extension === "xls") {
+    const data = await inputFile.arrayBuffer();
+    const workbook = XLSX.read(data, {
+      type: "buffer",
       raw: true,
       cellNF: true,
     });
+    // Read the Excel file
+    /*     const workbook = XLSX.read(inputFile, {
+      type: "file",
+      raw: true,
+      cellNF: true,
+    }); */
 
     workbook.SheetNames.forEach((sheetName) => {
       const worksheet = workbook.Sheets[sheetName];
@@ -171,7 +177,7 @@ async function processFile(
         }
       }
     });
-  } else if (extension === "text/csv") {
+  } else if (extension === "csv") {
     const data = await inputFile.arrayBuffer();
     const workbook = XLSX.read(data, { raw: true, cellNF: true });
     console.log(workbook);

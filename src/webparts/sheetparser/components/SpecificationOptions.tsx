@@ -23,12 +23,7 @@ const options: IDropdownOption[] = [
   { key: "csv", text: ".csv" },
   { key: "xlsx", text: ".xlsx" },
   { key: "divider_1", text: "-", itemType: DropdownMenuItemType.Divider },
-  /*   {
-    key: "optionsHeader2",
-    text: "Enter own text",
-    itemType: DropdownMenuItemType.Header,
-  }, */
-  { key: "enter", text: "Enter own specifications" },
+  { key: "custom", text: "Enter own specifications" },
 ];
 
 const stackTokens: IStackTokens = { childrenGap: 20 };
@@ -42,25 +37,63 @@ export const SpecificationOptions: React.FunctionComponent<
 > = ({ setSpecification }: ISpecificationOptionsProps) => {
   const [selectedItem, setSelectedItem] = React.useState<IDropdownOption>();
 
-  const isCustom = selectedItem?.key === "enter";
+  const isCustom = selectedItem?.key === "custom";
 
   const onChange = (
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
   ): void => {
     setSelectedItem(item);
-    setSpecification({
-      sheets: [
-        {
-          name: "TestSheet",
-          columns: [
-            { name: "Datum", type: "number" },
-            { name: "Konto", type: "/\\d{1,2}-\\d{1,2}-\\d{2,4}/" },
-            { name: "Titel", type: "string" },
+
+    switch (item.key) {
+      case "xlsx":
+        setSpecification({
+          sheets: [
+            {
+              name: "TestSheet",
+              columns: [
+                { name: "Konto", type: "number" },
+                { name: "Datum", type: "/\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}/" },
+                { name: "Titel", type: "string" },
+              ],
+            },
+            {
+              name: "Sheet2",
+              columns: [
+                { name: "Kontrakt", type: "string" },
+                { name: "ResourceGroup", type: "string" },
+              ],
+            },
           ],
-        },
-      ],
-    });
+        });
+        break;
+      case "csv":
+        setSpecification({
+          sheets: [
+            {
+              name: "TestSheet",
+              columns: [
+                { name: "Konto", type: "number" },
+                { name: "Datum", type: "/\\d{1,2}-\\d{1,2}-\\d{2,4}/" },
+                { name: "Titel", type: "string" },
+              ],
+            },
+          ],
+        });
+        break;
+      default:
+        setSpecification({
+          sheets: [
+            {
+              columns: [
+                { name: "Datum", type: "number" },
+                { name: "Konto", type: "number" },
+                { name: "Titel", type: "string" },
+              ],
+            },
+          ],
+        });
+    }
   };
 
   return (

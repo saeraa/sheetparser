@@ -10,7 +10,7 @@ export const ValidationError: React.FunctionComponent<
   IValidationErrorProps
 > = ({ result }: IValidationErrorProps) => {
   const { errors } = result;
-  const errorList = errors.map((error) => <li>{error}</li>);
+  const errorList = errors.map((error) => <li key={error}>{error}</li>);
   return (
     <div>
       {/* 
