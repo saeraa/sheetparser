@@ -8,6 +8,7 @@ import {
 } from "@fluentui/react/lib/Dropdown";
 import { IStackTokens, Stack } from "@fluentui/react/lib/Stack";
 
+import { CustomSpecifications } from "./CustomSpecifications";
 import { IJsonSpec } from "../../utils/sheetparser";
 
 const dropdownStyles: Partial<IDropdownStyles> = {
@@ -121,7 +122,7 @@ export const SpecificationOptions: React.FunctionComponent<
               
               */
 
-        isCustom && <div>You picked the custom option!</div>
+        isCustom && <CustomSpecifications setSpecification={setSpecification} />
       }
     </Stack>
   );

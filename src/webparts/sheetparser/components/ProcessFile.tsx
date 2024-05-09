@@ -19,18 +19,14 @@ export const ProcessFile: React.FunctionComponent<IProcessFileProps> = (
     if (!file) return;
     if (!specification) return;
     setLoading(true);
-    console.log("FILE is named: " + file.name);
     const response = await processFile(file, specification);
-    console.log(response);
     setResult(response);
     setLoading(false);
   }
 
   return (
-    <div>
-      <PrimaryButton onClick={() => handleSubmit(file)}>
-        {loading ? <Spinner /> : "Validate"}
-      </PrimaryButton>
-    </div>
+    <PrimaryButton onClick={() => handleSubmit(file)}>
+      {loading ? <Spinner /> : "Validate"}
+    </PrimaryButton>
   );
 };

@@ -4,6 +4,7 @@ import { ISheetparserProps } from "./ISheetparserProps";
 import { ProcessFile } from "./ProcessFile";
 import React from "react";
 import { SpecificationOptions } from "./SpecificationOptions";
+import { Stack } from "@fluentui/react";
 import { Upload } from "./Upload";
 import { ValidationError } from "./ValidationError";
 import { ValidationSuccess } from "./ValidationSuccess";
@@ -25,28 +26,31 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
     <section
       className={`${styles.sheetparser} ${hasTeamsContext ? styles.teams : ""}`}
     >
-      <div>
-        <Upload setFile={setFile} />
-        {file && (
-          <p>
-            File selected is: {file.name} of the type {file.type}
-          </p>
-        )}
-        <SpecificationOptions setSpecification={setSpecification} />
-        <ProcessFile
-          file={file ? file : undefined}
-          specification={specification ? specification : undefined}
-          setResult={setResult}
-        />
-      </div>
-      <div>
+      <Stack tokens={{ childrenGap: 10 }}>
+        <Stack.Item>
+          <Upload setFile={setFile} />
+        </Stack.Item>
+        <Stack.Item>
+          <SpecificationOptions setSpecification={setSpecification} />
+        </Stack.Item>
+        <Stack.Item>
+          <ProcessFile
+            file={file ? file : undefined}
+            specification={specification ? specification : undefined}
+            setResult={setResult}
+          />
+        </Stack.Item>
         {hasResult && result && result.success && (
-          <ValidationSuccess result={result} />
+          <Stack.Item>
+            <ValidationSuccess result={result} />
+          </Stack.Item>
         )}
         {hasResult && result && !result.success && (
-          <ValidationError result={result} />
+          <Stack.Item>
+            <ValidationError result={result} />
+          </Stack.Item>
         )}
-      </div>
+      </Stack>
       {
         // TODO
         // add reset button to be able to redo with a new file
