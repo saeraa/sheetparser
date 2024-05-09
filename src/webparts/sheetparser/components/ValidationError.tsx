@@ -20,10 +20,14 @@ export const ValidationError: React.FunctionComponent<
   });
   return (
     <>
-      <MessageBar delayedRender={false} messageBarType={MessageBarType.error}>
+      <MessageBar
+        isMultiline={true}
+        delayedRender={false}
+        messageBarType={MessageBarType.error}
+      >
         There are errors in the spreadsheet.
+        <Stack styles={{ root: { paddingTop: 10 } }}>{errorList}</Stack>
       </MessageBar>
-      <Stack styles={{ root: { paddingTop: 10 } }}>{errorList}</Stack>
     </>
   );
 };

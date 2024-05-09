@@ -91,7 +91,8 @@ export const Upload: React.FunctionComponent<IUploadProps> = ({
     return result;
   };
 
-  function clickUpload(): void {
+  function clickUpload(event: React.MouseEvent): void {
+    event.stopPropagation();
     inputRef.current?.click();
   }
 
@@ -145,61 +146,56 @@ export const Upload: React.FunctionComponent<IUploadProps> = ({
         onChange={handleFileInput}
         id="fileInput"
       />
-      <label htmlFor="fileInput">
+      <Stack onDrop={handleDrop} onDragOver={(event) => event.preventDefault()}>
         <Stack
-          onDrop={handleDrop}
-          onDragOver={(event) => event.preventDefault()}
+          horizontalAlign="center"
+          verticalAlign="center"
+          onClick={clickUpload}
+          aria-labelledby="upload-file"
+          autoFocus
+          className={
+            displayFile
+              ? stackClassNames.displayFile
+              : isWrongFileFormat
+              ? stackClassNames.isWrongFileFormat
+              : stackClassNames.default
+          }
         >
-          <Stack
-            horizontalAlign="center"
-            verticalAlign="center"
-            onClick={clickUpload}
-            aria-labelledby="upload-file"
-            autoFocus
-            className={
-              displayFile
-                ? stackClassNames.displayFile
-                : isWrongFileFormat
-                ? stackClassNames.isWrongFileFormat
-                : stackClassNames.default
-            }
-          >
-            {displayFile ? (
-              <>
-                <FontIcon
-                  aria-hidden={true}
-                  role="img"
-                  iconName="ExcelDocument"
-                  className={iconClassNames.displayFile}
-                />
-                <Text id="upload-file">
-                  {fileName.name + "." + fileName.extension}
-                </Text>
-              </>
-            ) : isWrongFileFormat ? (
-              <>
-                <FontIcon
-                  aria-hidden={true}
-                  role="img"
-                  iconName="FileBug"
-                  className={iconClassNames.isWrongFileFormat}
-                />
-                <Text id="upload-file">Unsupported file format</Text>
-              </>
-            ) : (
-              <>
-                <FontIcon
-                  aria-hidden={true}
-                  role="img"
-                  iconName="Add"
-                  className={iconClass}
-                />
-                <Text id="upload-file">Upload file</Text>
-              </>
-            )}
-          </Stack>
+          {displayFile ? (
+            <>
+              <FontIcon
+                aria-hidden={true}
+                role="img"
+                iconName="ExcelDocument"
+                className={iconClassNames.displayFile}
+              />
+              <Text id="upload-file">
+                {fileName.name + "." + fileName.extension}
+              </Text>
+            </>
+          ) : isWrongFileFormat ? (
+            <>
+              <FontIcon
+                aria-hidden={true}
+                role="img"
+                iconName="FileBug"
+                className={iconClassNames.isWrongFileFormat}
+              />
+              <Text id="upload-file">Unsupported file format</Text>
+            </>
+          ) : (
+            <>
+              <FontIcon
+                aria-hidden={true}
+                role="img"
+                iconName="Add"
+                className={iconClass}
+              />
+              <Text id="upload-file">Upload file</Text>
+            </>
+          )}
         </Stack>
-      </label>
+      </Stack>
     </>
   );
 };

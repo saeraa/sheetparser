@@ -9,6 +9,7 @@ import {
 
 import { IJsonSpec } from "../../utils/sheetparser";
 import { Stack } from "@fluentui/react/lib/Stack";
+import { XLSXSpecInput } from "./XLSXSpecInput";
 import { useBoolean } from "../../utils/useBoolean";
 
 interface ICustomSpecificationsProps {
@@ -42,7 +43,7 @@ const options: IChoiceGroupOption[] = [
 export const CustomSpecifications: React.FunctionComponent<
   ICustomSpecificationsProps
 > = ({ setSpecification }: ICustomSpecificationsProps) => {
-  const [hasSheetNames, setHasSheetNames] = React.useState(false);
+  const [hasSheetNames, setHasSheetNames] = React.useState(true);
   const [jsonError, setJsonError] = React.useState(false);
   const { value, toggle } = useBoolean(false);
   function onFileFormatChange(
@@ -53,23 +54,56 @@ export const CustomSpecifications: React.FunctionComponent<
     else setHasSheetNames(true);
   }
 
-  /* 
-    TODO
-    validera JSON? jämföra med IJSONSpec ?
-    
-    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function isValidJsonSpec(obj: any): obj is IJsonSpec {
+    if (!Array.isArray(obj.sheets)) {
+      return false;
+    }
+
+    for (const sheet of obj.sheets) {
+      if (!Array.isArray(sheet.columns)) {
+        return false;
+      }
+
+      for (const column of sheet.columns) {
+        if (
+          typeof column.name !== "string" ||
+          typeof column.type !== "string"
+        ) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
 
   function codeInputChange(
     event: React.FormEvent<HTMLTextAreaElement>,
     newValue?: string | undefined
   ): void {
     if (newValue) {
+      setSpecification(undefined);
       try {
-        JSON.parse(newValue.toString());
+        const parsedInput = JSON.parse(newValue);
+        if (isValidJsonSpec(parsedInput)) {
+          setJsonError(false);
+          setSpecification(parsedInput);
+        } else {
+          setJsonError(true);
+        }
       } catch (error) {
         setJsonError(true);
       }
     }
+  }
+
+  function toggleChange(
+    event: React.MouseEvent<HTMLElement, MouseEvent>,
+    checked?: boolean | undefined
+  ): void {
+    setSpecification(undefined);
+    toggle();
   }
 
   return (
@@ -78,7 +112,7 @@ export const CustomSpecifications: React.FunctionComponent<
         label="Enter custom JSON"
         onText="On"
         offText="Off"
-        onChange={toggle}
+        onChange={toggleChange}
       />
       {!value && (
         <>
@@ -88,7 +122,9 @@ export const CustomSpecifications: React.FunctionComponent<
             options={options}
             onChange={onFileFormatChange}
           />
-          {hasSheetNames && <p>Lets do some sheety names</p>}
+          {hasSheetNames && (
+            <XLSXSpecInput setSpecification={setSpecification} />
+          )}
         </>
       )}
       {value && (

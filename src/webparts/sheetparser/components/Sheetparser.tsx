@@ -17,7 +17,9 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
   const [specification, setSpecification] = React.useState<
     IJsonSpec | undefined
   >();
-  const [result, setResult] = React.useState<IResponse>();
+  const [result, setResult] = React.useState<IResponse | undefined>();
+
+  React.useMemo(() => setResult(undefined), [specification]);
 
   const hasResult: boolean =
     result !== undefined && result.success !== undefined;
