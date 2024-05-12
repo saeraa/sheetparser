@@ -2,7 +2,10 @@ import * as React from "react";
 
 import {
   ChoiceGroup,
+  Coachmark,
+  DirectionalHint,
   IChoiceGroupOption,
+  TeachingBubbleContent,
   TextField,
   Toggle,
 } from "@fluentui/react";
@@ -10,6 +13,7 @@ import {
 import { IJsonSpec } from "../../utils/sheetparser";
 import { Stack } from "@fluentui/react/lib/Stack";
 import { XLSXSpecInput } from "./XLSXSpecInput";
+import { useBoolean as fluentUseBoolean } from "@fluentui/react-hooks";
 import { useBoolean } from "../../utils/useBoolean";
 
 interface ICustomSpecificationsProps {
@@ -27,6 +31,19 @@ interface ICustomSpecificationsProps {
               
               */
 
+const EXAMPLE_CODE = `{
+  "sheets": [
+    {
+      "name": "Sheet1",
+      "columns": [
+        { "name": "Column1", "type": "number" },
+        { "name": "Column2", "type": "number" },
+        { "name": "Column3", "type": "string" }
+      ]
+    }
+  ]
+}`;
+
 const options: IChoiceGroupOption[] = [
   {
     key: "csv",
@@ -43,6 +60,11 @@ const options: IChoiceGroupOption[] = [
 export const CustomSpecifications: React.FunctionComponent<
   ICustomSpecificationsProps
 > = ({ setSpecification }: ICustomSpecificationsProps) => {
+  const [
+    isCoachmarkVisible,
+    { setFalse: hideCoachmark, setTrue: showCoachmark },
+  ] = fluentUseBoolean(true);
+  const targetInput = React.useRef<HTMLInputElement>(null);
   const [hasSheetNames, setHasSheetNames] = React.useState(true);
   const [jsonError, setJsonError] = React.useState(false);
   const { value, toggle } = useBoolean(false);
@@ -106,6 +128,12 @@ export const CustomSpecifications: React.FunctionComponent<
     toggle();
   }
 
+  function copyExampleCode(): void {
+    navigator.clipboard.writeText(EXAMPLE_CODE.toString()).catch((error) => {
+      console.error(error);
+    });
+  }
+
   return (
     <Stack>
       <Toggle
@@ -130,13 +158,47 @@ export const CustomSpecifications: React.FunctionComponent<
       {value && (
         <>
           <TextField
+            elementRef={targetInput}
             styles={{ root: { fontFamily: "monospace" } }}
             label="Specification code"
             multiline
             rows={3}
             onChange={codeInputChange}
             errorMessage={jsonError ? "Invalid JSON input" : ""}
+            invalid={jsonError}
+            onMouseOver={hideCoachmark}
+            onMouseLeave={showCoachmark}
           />
+          {isCoachmarkVisible && (
+            <Coachmark
+              target={targetInput}
+              positioningContainerProps={{
+                directionalHint: DirectionalHint.topRightEdge,
+                offsetFromTarget: -2,
+              }}
+              ariaAlertText="A coachmark has appeared"
+              ariaDescribedBy="coachmark-desc1"
+              ariaLabelledBy="coachmark-label1"
+              ariaDescribedByText="Press enter or alt + C to open the coachmark notification"
+              ariaLabelledByText="Coachmark notification"
+            >
+              <TeachingBubbleContent
+                primaryButtonProps={{
+                  children: "Copy example code",
+                  onClick: copyExampleCode,
+                }}
+                hasSmallHeadline={true}
+                headline="JSON specification structure"
+                hasCloseButton
+                closeButtonAriaLabel="Close"
+                ariaDescribedBy="example-description1"
+                ariaLabelledBy="example-label1"
+                onDismiss={hideCoachmark}
+              >
+                <pre>{EXAMPLE_CODE.toString()}</pre>
+              </TeachingBubbleContent>
+            </Coachmark>
+          )}
         </>
       )}
     </Stack>

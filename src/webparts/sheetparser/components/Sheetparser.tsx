@@ -1,6 +1,5 @@
 import { IJsonSpec, IResponse } from "../../utils/sheetparser";
 
-import { ISheetparserProps } from "./ISheetparserProps";
 import { ProcessFile } from "./ProcessFile";
 import React from "react";
 import { SpecificationOptions } from "./SpecificationOptions";
@@ -9,6 +8,14 @@ import { Upload } from "./Upload";
 import { ValidationError } from "./ValidationError";
 import { ValidationSuccess } from "./ValidationSuccess";
 import styles from "./Sheetparser.module.scss";
+
+export interface ISheetparserProps {
+  description: string;
+  isDarkTheme: boolean;
+  environmentMessage: string;
+  hasTeamsContext: boolean;
+  userDisplayName: string;
+}
 
 const Sheetparser: React.FC<ISheetparserProps> = ({
   hasTeamsContext,
