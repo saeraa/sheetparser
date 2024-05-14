@@ -31,11 +31,16 @@ const stackTokens: IStackTokens = { childrenGap: 20 };
 
 interface ISpecificationOptionsProps {
   setSpecification: React.Dispatch<React.SetStateAction<IJsonSpec | undefined>>;
+  uploadSpecification: (
+    file: File | string | undefined,
+    fileName: string | undefined,
+    template?: boolean
+  ) => Promise<boolean | string>;
 }
 
 export const SpecificationOptions: React.FunctionComponent<
   ISpecificationOptionsProps
-> = ({ setSpecification }: ISpecificationOptionsProps) => {
+> = ({ setSpecification, uploadSpecification }: ISpecificationOptionsProps) => {
   const [selectedItem, setSelectedItem] = React.useState<IDropdownOption>();
 
   const isCustom = selectedItem?.key === "custom";
@@ -109,21 +114,12 @@ export const SpecificationOptions: React.FunctionComponent<
         styles={dropdownStyles}
       />
 
-      {
-        /* 
-              TODO!  
-              add input for own specifications
-              type xlsx: enter worksheet title
-              type csv: ignore title
-              2 input field with "name", "type"
-              + sign to add more rows
-              big button to add new worksheet(xlsx)
-              
-              
-              */
-
-        isCustom && <CustomSpecifications setSpecification={setSpecification} />
-      }
+      {isCustom && (
+        <CustomSpecifications
+          uploadSpecification={uploadSpecification}
+          setSpecification={setSpecification}
+        />
+      )}
     </Stack>
   );
 };

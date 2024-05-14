@@ -82,6 +82,7 @@ async function processFile(
 
       if (!range) {
         response.success = false;
+        response.errors.push(`Worksheet: ${sheetName}`);
         response.errors.push(`Worksheet ${sheetName} is empty.`);
         return;
       }
@@ -180,12 +181,6 @@ async function processFile(
   } else if (extension === "csv") {
     const data = await inputFile.arrayBuffer();
     const workbook = XLSX.read(data, { raw: true, cellNF: true });
-    console.log(workbook);
-    /* const workbook = XLSX.read(inputFile, {
-      type: "file",
-      raw: true,
-      cellNF: true,
-    }); */
 
     workbook.SheetNames.forEach((sheetName) => {
       const worksheet = workbook.Sheets[sheetName];
@@ -194,6 +189,7 @@ async function processFile(
 
       if (!range) {
         response.success = false;
+        response.errors.push(`Worksheet: ${sheetName}`);
         response.errors.push(`Worksheet ${sheetName} is empty.`);
         return;
       }

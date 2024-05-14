@@ -1,35 +1,25 @@
 import * as React from "react";
 
 import {
-  ChoiceGroup,
   Coachmark,
+  DefaultButton,
   DirectionalHint,
-  IChoiceGroupOption,
   TeachingBubbleContent,
   TextField,
-  Toggle,
 } from "@fluentui/react";
 
 import { IJsonSpec } from "../../utils/sheetparser";
 import { Stack } from "@fluentui/react/lib/Stack";
-import { XLSXSpecInput } from "./XLSXSpecInput";
-import { useBoolean as fluentUseBoolean } from "@fluentui/react-hooks";
-import { useBoolean } from "../../utils/useBoolean";
+import { useBoolean } from "@fluentui/react-hooks";
 
 interface ICustomSpecificationsProps {
   setSpecification: React.Dispatch<React.SetStateAction<IJsonSpec | undefined>>;
+  uploadSpecification: (
+    file: File | string | undefined,
+    fileName: string | undefined,
+    template?: boolean
+  ) => Promise<boolean | string>;
 }
-/* 
-              TODO!  
-              add input for own specifications
-              type xlsx: enter worksheet title
-              type csv: ignore title
-              2 input field with "name", "type"
-              + sign to add more rows
-              big button to add new worksheet(xlsx)
-              
-              
-              */
 
 const EXAMPLE_CODE = `{
   "sheets": [
@@ -44,37 +34,16 @@ const EXAMPLE_CODE = `{
   ]
 }`;
 
-const options: IChoiceGroupOption[] = [
-  {
-    key: "csv",
-    text: "CSV",
-    iconProps: { iconName: "KnowledgeArticle" },
-  },
-  {
-    key: "xlsx",
-    text: "XLSX",
-    iconProps: { iconName: "ExcelDocument" },
-  },
-];
-
 export const CustomSpecifications: React.FunctionComponent<
   ICustomSpecificationsProps
-> = ({ setSpecification }: ICustomSpecificationsProps) => {
+> = ({ setSpecification, uploadSpecification }: ICustomSpecificationsProps) => {
   const [
     isCoachmarkVisible,
     { setFalse: hideCoachmark, setTrue: showCoachmark },
-  ] = fluentUseBoolean(true);
+  ] = useBoolean(true);
+  const [specificationName, setSpecificationName] = React.useState("");
   const targetInput = React.useRef<HTMLInputElement>(null);
-  const [hasSheetNames, setHasSheetNames] = React.useState(true);
   const [jsonError, setJsonError] = React.useState(false);
-  const { value, toggle } = useBoolean(false);
-  function onFileFormatChange(
-    event: React.FormEvent<HTMLInputElement>,
-    option: IChoiceGroupOption
-  ): void {
-    if (option.key === "csv") setHasSheetNames(false);
-    else setHasSheetNames(true);
-  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function isValidJsonSpec(obj: any): obj is IJsonSpec {
@@ -100,6 +69,16 @@ export const CustomSpecifications: React.FunctionComponent<
     return true;
   }
 
+  async function handleUpload(): Promise<void> {
+    uploadSpecification(
+      targetInput.current?.value,
+      specificationName + ".json",
+      true
+    ).catch((error) => {
+      console.error(error);
+    });
+  }
+
   function codeInputChange(
     event: React.FormEvent<HTMLTextAreaElement>,
     newValue?: string | undefined
@@ -120,13 +99,15 @@ export const CustomSpecifications: React.FunctionComponent<
     }
   }
 
-  function toggleChange(
-    event: React.MouseEvent<HTMLElement, MouseEvent>,
-    checked?: boolean | undefined
-  ): void {
-    setSpecification(undefined);
-    toggle();
-  }
+  const onChangeSpecificationName = React.useCallback(
+    (
+      event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
+      newValue?: string
+    ) => {
+      setSpecificationName(newValue || "");
+    },
+    []
+  );
 
   function copyExampleCode(): void {
     navigator.clipboard.writeText(EXAMPLE_CODE.toString()).catch((error) => {
@@ -136,70 +117,58 @@ export const CustomSpecifications: React.FunctionComponent<
 
   return (
     <Stack>
-      <Toggle
-        label="Enter custom JSON"
-        onText="On"
-        offText="Off"
-        onChange={toggleChange}
-      />
-      {!value && (
-        <>
-          <ChoiceGroup
-            label="Choose file format"
-            defaultSelectedKey="xlsx"
-            options={options}
-            onChange={onFileFormatChange}
-          />
-          {hasSheetNames && (
-            <XLSXSpecInput setSpecification={setSpecification} />
-          )}
-        </>
-      )}
-      {value && (
-        <>
-          <TextField
-            elementRef={targetInput}
-            styles={{ root: { fontFamily: "monospace" } }}
-            label="Specification code"
-            multiline
-            rows={3}
-            onChange={codeInputChange}
-            errorMessage={jsonError ? "Invalid JSON input" : ""}
-            invalid={jsonError}
-            onMouseOver={hideCoachmark}
-            onMouseLeave={showCoachmark}
-          />
-          {isCoachmarkVisible && (
-            <Coachmark
-              target={targetInput}
-              positioningContainerProps={{
-                directionalHint: DirectionalHint.topRightEdge,
-                offsetFromTarget: -2,
-              }}
-              ariaAlertText="A coachmark has appeared"
-              ariaDescribedBy="coachmark-desc1"
-              ariaLabelledBy="coachmark-label1"
-              ariaDescribedByText="Press enter or alt + C to open the coachmark notification"
-              ariaLabelledByText="Coachmark notification"
-            >
-              <TeachingBubbleContent
-                primaryButtonProps={{
-                  children: "Copy example code",
-                  onClick: copyExampleCode,
-                }}
-                hasSmallHeadline={true}
-                headline="JSON specification structure"
-                hasCloseButton
-                closeButtonAriaLabel="Close"
-                ariaDescribedBy="example-description1"
-                ariaLabelledBy="example-label1"
-                onDismiss={hideCoachmark}
-              >
-                <pre>{EXAMPLE_CODE.toString()}</pre>
-              </TeachingBubbleContent>
-            </Coachmark>
-          )}
-        </>
+      <Stack.Item>
+        <TextField
+          elementRef={targetInput}
+          styles={{ root: { fontFamily: "monospace" } }}
+          label="Specification code"
+          multiline
+          rows={3}
+          onChange={codeInputChange}
+          errorMessage={jsonError ? "Invalid JSON input" : ""}
+          invalid={jsonError}
+          onMouseOver={hideCoachmark}
+          onMouseLeave={showCoachmark}
+        />
+      </Stack.Item>
+      <Stack.Item>
+        <TextField
+          label="Specification name"
+          onChange={onChangeSpecificationName}
+          value={specificationName}
+        />
+      </Stack.Item>
+      <Stack.Item>
+        <DefaultButton onClick={handleUpload}>
+          Upload specification
+        </DefaultButton>
+      </Stack.Item>
+      {isCoachmarkVisible && (
+        <Coachmark
+          target={targetInput}
+          positioningContainerProps={{
+            directionalHint: DirectionalHint.topRightEdge,
+          }}
+          ariaAlertText="A coachmark has appeared"
+          ariaDescribedByText="Press enter or alt + C to open the coachmark notification"
+          ariaLabelledByText="Coachmark notification"
+          delayBeforeMouseOpen={1000}
+        >
+          <TeachingBubbleContent
+            primaryButtonProps={{
+              children: "Copy example code",
+              onClick: copyExampleCode,
+            }}
+            hasSmallHeadline={true}
+            headline="JSON specification structure"
+            hasCloseButton
+            closeButtonAriaLabel="Close"
+            onDismiss={hideCoachmark}
+            isWide={true}
+          >
+            <pre>{EXAMPLE_CODE.toString()}</pre>
+          </TeachingBubbleContent>
+        </Coachmark>
       )}
     </Stack>
   );

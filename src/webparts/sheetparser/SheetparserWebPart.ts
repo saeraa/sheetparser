@@ -24,6 +24,7 @@ export default class SheetparserWebPart extends BaseClientSideWebPart<ISheetpars
     const element: React.ReactElement<ISheetparserProps> = React.createElement(
       Sheetparser,
       {
+        wpContext: this.context,
         description: this.properties.description,
         isDarkTheme: this._isDarkTheme,
         environmentMessage: this._environmentMessage,
