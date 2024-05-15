@@ -15,18 +15,6 @@ const dropdownStyles: Partial<IDropdownStyles> = {
   dropdown: { width: 300 },
 };
 
-const options: IDropdownOption[] = [
-  {
-    key: "optionsHeader",
-    text: "Premade",
-    itemType: DropdownMenuItemType.Header,
-  },
-  { key: "csv", text: ".csv" },
-  { key: "xlsx", text: ".xlsx" },
-  { key: "divider_1", text: "-", itemType: DropdownMenuItemType.Divider },
-  { key: "custom", text: "Enter own specifications" },
-];
-
 const stackTokens: IStackTokens = { childrenGap: 20 };
 
 interface ISpecificationOptionsProps {
@@ -36,12 +24,50 @@ interface ISpecificationOptionsProps {
     fileName: string | undefined,
     template?: boolean
   ) => Promise<boolean | string>;
+  specFiles: { file: string; id: string }[];
+  getSpecFile: (fileName: string) => Promise<IJsonSpec | undefined>;
 }
 
 export const SpecificationOptions: React.FunctionComponent<
   ISpecificationOptionsProps
-> = ({ setSpecification, uploadSpecification }: ISpecificationOptionsProps) => {
+> = ({
+  setSpecification,
+  uploadSpecification,
+  specFiles,
+  getSpecFile,
+}: ISpecificationOptionsProps) => {
   const [selectedItem, setSelectedItem] = React.useState<IDropdownOption>();
+  const [options, setOptions] = React.useState<IDropdownOption[]>([]);
+
+  function generateOptions(): void {
+    const tempArray: IDropdownOption[] = [
+      {
+        key: "optionsHeader",
+        text: "Premade",
+        itemType: DropdownMenuItemType.Header,
+      },
+    ];
+    const specFilesOptions = specFiles.map((file) => {
+      return { key: file.id, text: file.file };
+    });
+    specFilesOptions.forEach((option) => {
+      tempArray.push(option);
+    });
+    tempArray.push({
+      key: "divider_1",
+      text: "-",
+      itemType: DropdownMenuItemType.Divider,
+    });
+    tempArray.push({ key: "custom", text: "Enter own specifications" });
+
+    setOptions(tempArray);
+
+    console.log("Options generated");
+  }
+
+  React.useEffect(() => {
+    generateOptions();
+  }, [specFiles]);
 
   const isCustom = selectedItem?.key === "custom";
 
@@ -51,55 +77,9 @@ export const SpecificationOptions: React.FunctionComponent<
   ): void => {
     setSelectedItem(item);
 
-    switch (item.key) {
-      case "xlsx":
-        setSpecification({
-          sheets: [
-            {
-              name: "TestSheet",
-              columns: [
-                { name: "Konto", type: "number" },
-                { name: "Datum", type: "/\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}/" },
-                { name: "Titel", type: "string" },
-              ],
-            },
-            {
-              name: "Sheet2",
-              columns: [
-                { name: "Kontrakt", type: "string" },
-                { name: "ResourceGroup", type: "string" },
-              ],
-            },
-          ],
-        });
-        break;
-      case "csv":
-        setSpecification({
-          sheets: [
-            {
-              name: "TestSheet",
-              columns: [
-                { name: "Konto", type: "number" },
-                { name: "Datum", type: "/\\d{1,2}-\\d{1,2}-\\d{2,4}/" },
-                { name: "Titel", type: "string" },
-              ],
-            },
-          ],
-        });
-        break;
-      default:
-        setSpecification({
-          sheets: [
-            {
-              columns: [
-                { name: "Datum", type: "number" },
-                { name: "Konto", type: "number" },
-                { name: "Titel", type: "string" },
-              ],
-            },
-          ],
-        });
-    }
+    getSpecFile(item.key as string).then((json) => {
+      setSpecification(json);
+    });
   };
 
   return (

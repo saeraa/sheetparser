@@ -20,7 +20,26 @@ interface ICustomSpecificationsProps {
     template?: boolean
   ) => Promise<boolean | string>;
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isValidJsonSpec(obj: any): obj is IJsonSpec {
+  if (!Array.isArray(obj.sheets)) {
+    return false;
+  }
 
+  for (const sheet of obj.sheets) {
+    if (!Array.isArray(sheet.columns)) {
+      return false;
+    }
+
+    for (const column of sheet.columns) {
+      if (typeof column.name !== "string" || typeof column.type !== "string") {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
 const EXAMPLE_CODE = `{
   "sheets": [
     {
@@ -41,37 +60,14 @@ export const CustomSpecifications: React.FunctionComponent<
     isCoachmarkVisible,
     { setFalse: hideCoachmark, setTrue: showCoachmark },
   ] = useBoolean(true);
+  const [textFieldInput, setTextFieldInput] = React.useState("");
   const [specificationName, setSpecificationName] = React.useState("");
   const targetInput = React.useRef<HTMLInputElement>(null);
   const [jsonError, setJsonError] = React.useState(false);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function isValidJsonSpec(obj: any): obj is IJsonSpec {
-    if (!Array.isArray(obj.sheets)) {
-      return false;
-    }
-
-    for (const sheet of obj.sheets) {
-      if (!Array.isArray(sheet.columns)) {
-        return false;
-      }
-
-      for (const column of sheet.columns) {
-        if (
-          typeof column.name !== "string" ||
-          typeof column.type !== "string"
-        ) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
   async function handleUpload(): Promise<void> {
     uploadSpecification(
-      targetInput.current?.value,
+      textFieldInput,
       specificationName + ".json",
       true
     ).catch((error) => {
@@ -83,6 +79,7 @@ export const CustomSpecifications: React.FunctionComponent<
     event: React.FormEvent<HTMLTextAreaElement>,
     newValue?: string | undefined
   ): void {
+    setTextFieldInput(newValue || "");
     if (newValue) {
       setSpecification(undefined);
       try {
@@ -124,6 +121,7 @@ export const CustomSpecifications: React.FunctionComponent<
           label="Specification code"
           multiline
           rows={3}
+          value={textFieldInput}
           onChange={codeInputChange}
           errorMessage={jsonError ? "Invalid JSON input" : ""}
           invalid={jsonError}
@@ -139,7 +137,7 @@ export const CustomSpecifications: React.FunctionComponent<
         />
       </Stack.Item>
       <Stack.Item>
-        <DefaultButton onClick={handleUpload}>
+        <DefaultButton onClick={handleUpload} disabled={jsonError}>
           Upload specification
         </DefaultButton>
       </Stack.Item>

@@ -2,19 +2,20 @@ import "@pnp/sp/files";
 import "@pnp/sp/folders";
 import "@pnp/sp/webs";
 
-import { DefaultButton, Link, Stack } from "@fluentui/react";
+import { DefaultButton, Link, Shimmer, Stack } from "@fluentui/react";
 import { IJsonSpec, IResponse } from "../../utils/sheetparser";
-import { SPFx, spfi } from "@pnp/sp";
 
 import { IFileInfo } from "@pnp/sp/files";
 import { ProcessFile } from "./ProcessFile";
 import React from "react";
+import { SPFI } from "@pnp/sp";
 import { SpecificationOptions } from "./SpecificationOptions";
 import { Upload } from "./Upload";
 import { ValidationError } from "./ValidationError";
 import { ValidationSuccess } from "./ValidationSuccess";
-import { WebPartContext } from "@microsoft/sp-webpart-base";
+import { isValidJsonSpec } from "./CustomSpecifications";
 import styles from "./Sheetparser.module.scss";
+import { useBoolean } from "@fluentui/react-hooks";
 
 export interface ISheetparserProps {
   description: string;
@@ -22,20 +23,55 @@ export interface ISheetparserProps {
   environmentMessage: string;
   hasTeamsContext: boolean;
   userDisplayName: string;
-  wpContext: WebPartContext;
+  sp: SPFI | undefined;
 }
 
 const Sheetparser: React.FC<ISheetparserProps> = ({
   hasTeamsContext,
-  wpContext,
+  sp,
 }: ISheetparserProps) => {
   const [filePath, setFilePath] = React.useState<string | undefined>();
   const [file, setFile] = React.useState<File | undefined>();
   const [specification, setSpecification] = React.useState<
     IJsonSpec | undefined
   >();
+  const [loading, { setFalse: setNotLoading, setTrue: setLoading }] =
+    useBoolean(false);
 
-  const sp = spfi().using(SPFx(wpContext));
+  const [specFiles, setSpecFiles] = React.useState<
+    { file: string; id: string }[]
+  >([]);
+
+  React.useEffect(() => {
+    setLoading();
+    getSpecFiles();
+  }, []);
+
+  async function getSpecFile(fileId: string): Promise<IJsonSpec | undefined> {
+    console.log("getting spec file ", fileId);
+    try {
+      const json = await sp?.web.getFileById(fileId).getJSON();
+      const isValidJson = isValidJsonSpec(json);
+      if (isValidJson) return json;
+    } catch (e) {
+      //TODO instead of console logging, we should show an error message to the user
+      console.log(e);
+    }
+  }
+
+  async function getSpecFiles() {
+    if (sp !== undefined) {
+      const response = await sp.web
+        .getFolderByServerRelativePath("Delade dokument/templates")
+        .files();
+      setSpecFiles(
+        response.map((file) => {
+          return { file: file.Name, id: file.UniqueId };
+        })
+      );
+      setNotLoading();
+    }
+  }
 
   const [result, setResult] = React.useState<IResponse | undefined>();
 
@@ -50,9 +86,12 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
   async function uploadFile(
     file: File | string | undefined,
     fileName: string | undefined,
-    template = false
+    template: boolean = false
   ): Promise<boolean | string> {
+    console.log("uploading file... ");
     if (!file || !fileName) return false;
+    if (!sp) return false;
+    console.log(file, fileName);
 
     const filePath = template
       ? "Delade dokument/templates"
@@ -83,10 +122,17 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
           <Upload setFile={setFile} />
         </Stack.Item>
         <Stack.Item>
-          <SpecificationOptions
-            uploadSpecification={uploadFile}
-            setSpecification={setSpecification}
-          />
+          <Shimmer
+            isDataLoaded={!loading}
+            ariaLabel="Loading specification options..."
+          >
+            <SpecificationOptions
+              specFiles={specFiles}
+              getSpecFile={getSpecFile}
+              uploadSpecification={uploadFile}
+              setSpecification={setSpecification}
+            />
+          </Shimmer>
         </Stack.Item>
         <Stack.Item>
           <ProcessFile
@@ -135,16 +181,3 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
 };
 
 export default Sheetparser;
-
-/* 
- TODO
-
-  add reset button to be able to redo with a new file
-  add reset function also to onchange of file
-
-  upload file works - but needs confirmation of upload OK
-  get file specs from spec folder
-
-  ability to upload spec to spec folder
-
- */

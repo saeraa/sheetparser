@@ -7,6 +7,7 @@ import {
 } from "@microsoft/sp-property-pane";
 import { BaseClientSideWebPart } from "@microsoft/sp-webpart-base";
 import { IReadonlyTheme } from "@microsoft/sp-component-base";
+import { getSP } from "../utils/pnpjsConfig";
 
 import * as strings from "SheetparserWebPartStrings";
 import Sheetparser from "./components/Sheetparser";
@@ -24,7 +25,7 @@ export default class SheetparserWebPart extends BaseClientSideWebPart<ISheetpars
     const element: React.ReactElement<ISheetparserProps> = React.createElement(
       Sheetparser,
       {
-        wpContext: this.context,
+        sp: getSP(this.context),
         description: this.properties.description,
         isDarkTheme: this._isDarkTheme,
         environmentMessage: this._environmentMessage,
