@@ -61,8 +61,6 @@ export const SpecificationOptions: React.FunctionComponent<
     tempArray.push({ key: "custom", text: "Enter own specifications" });
 
     setOptions(tempArray);
-
-    console.log("Options generated");
   }
 
   React.useEffect(() => {
@@ -77,9 +75,15 @@ export const SpecificationOptions: React.FunctionComponent<
   ): void => {
     setSelectedItem(item);
 
-    getSpecFile(item.key as string).then((json) => {
-      setSpecification(json);
-    });
+    if (item.key === "custom") return;
+
+    getSpecFile(item.key as string)
+      .then((json) => {
+        setSpecification(json);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
   };
 
   return (

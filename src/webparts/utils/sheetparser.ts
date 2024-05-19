@@ -11,6 +11,7 @@ interface ISheetSpec {
 }
 
 interface IJsonSpec {
+  fileName?: string;
   sheets: ISheetSpec[];
 }
 
@@ -51,15 +52,30 @@ async function processFile(
     errors: [],
   };
 
-  // Checking file extension
-  //const extension = inputFile.type;
-  //const extension = path.extname(inputFile).toLowerCase();
-
   const name = inputFile.name;
   const lastDot = name.lastIndexOf(".");
 
-  //const fileName = name.substring(0, lastDot);
+  const fileName = name.substring(0, lastDot);
   const extension = name.substring(lastDot + 1);
+
+  if (specifications.fileName) {
+    let regex;
+    try {
+      //eslint-disable-next-line @rushstack/security/no-unsafe-regexp
+      regex = new RegExp(specifications.fileName.slice(1, -1));
+      if (!regex.test(fileName)) {
+        response.success = false;
+        response.errors.push(
+          `Mismatch in file name: Expected fileName in the format "${specifications.fileName}", but found "${fileName}"`
+        );
+      }
+    } catch (error) {
+      response.success = false;
+      response.errors.push(
+        `Invalid regular expression for fileName: ${error.message}`
+      );
+    }
+  }
 
   if (extension === "xlsx" || extension === "xls") {
     const data = await inputFile.arrayBuffer();
@@ -67,20 +83,35 @@ async function processFile(
       type: "buffer",
       raw: true,
       cellNF: true,
+      cellDates: true,
+      dateNF: "yyyy-mm-dd",
     });
-    // Read the Excel file
-    /*     const workbook = XLSX.read(inputFile, {
-      type: "file",
-      raw: true,
-      cellNF: true,
-    }); */
 
-    workbook.SheetNames.forEach((sheetName) => {
+    workbook.SheetNames.forEach((sheetName, sheetIndex) => {
       const worksheet = workbook.Sheets[sheetName];
 
       const range = worksheet["!ref"];
 
+      const sheetSpec =
+        specifications.sheets.find((spec) => {
+          return (
+            (spec.name &&
+              spec.name.toLowerCase().trim() ===
+                sheetName.toLowerCase().trim()) ||
+            spec.name === ""
+          );
+        }) || specifications.sheets[sheetIndex];
+
+      if (!sheetSpec || !sheetSpec.columns || sheetSpec.columns.length === 0) {
+        // Skip the sheet if there are no specified columns
+        response.errors.push(
+          `Worksheet: ${sheetName}: Skipping sheet - No columns specified.`
+        );
+        return;
+      }
+
       if (!range) {
+        // Throw an error if the sheet is empty
         response.success = false;
         response.errors.push(`Worksheet: ${sheetName}`);
         response.errors.push(`Worksheet ${sheetName} is empty.`);
@@ -88,21 +119,6 @@ async function processFile(
       }
 
       response.errors.push(`Worksheet: ${sheetName}`);
-
-      const sheetSpec = specifications.sheets.find((spec) => {
-        return (
-          spec.name &&
-          spec.name.toLowerCase().trim() === sheetName.toLowerCase().trim()
-        );
-      });
-
-      if (!sheetSpec) {
-        response.success = false;
-        response.errors.push(
-          `No specifications found for worksheet: ${sheetName}`
-        );
-        return;
-      }
 
       // Get the column range
       const firstCell = range.split(":")[0];
@@ -144,10 +160,6 @@ async function processFile(
               `Mismatch in column ${col}: Expected "${columnSpec.name}", but found "${cellValue}" at ${cellAddress}`
             );
           }
-          //* detail where the column should be, if exists in the spec
-          // find in sheetSpec.columns ->
-          // does columnSpec exist? if yes, print which order it should be
-          // if no, print 'columnSpec does not exist for columnName'
 
           continue; // Skip further validation for this column
         }
@@ -163,10 +175,11 @@ async function processFile(
             ? worksheet[cellAddress].w
             : undefined;
 
-          if (!cellValue) return;
+          if (!cellValue) continue;
 
           if (!isValidType(cellValue, columnSpec.type)) {
             response.success = false;
+
             response.errors.push(
               `Invalid data type in column ${col}, row ${rowIndex}: Expected type "${
                 columnSpec.type
@@ -186,15 +199,14 @@ async function processFile(
       const worksheet = workbook.Sheets[sheetName];
 
       const range = worksheet["!ref"];
+      
+      response.errors.push(`Worksheet: ${sheetName}`);
 
       if (!range) {
         response.success = false;
-        response.errors.push(`Worksheet: ${sheetName}`);
         response.errors.push(`Worksheet ${sheetName} is empty.`);
         return;
       }
-
-      response.errors.push(`Worksheet: ${sheetName}`);
 
       const sheetSpec = specifications.sheets[0];
 

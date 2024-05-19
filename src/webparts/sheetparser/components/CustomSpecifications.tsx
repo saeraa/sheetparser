@@ -3,9 +3,14 @@ import * as React from "react";
 import {
   Coachmark,
   DefaultButton,
+  DefaultEffects,
   DirectionalHint,
+  FluentTheme,
+  FontIcon,
   TeachingBubbleContent,
   TextField,
+  mergeStyleSets,
+  mergeStyles,
 } from "@fluentui/react";
 
 import { IJsonSpec } from "../../utils/sheetparser";
@@ -64,15 +69,20 @@ export const CustomSpecifications: React.FunctionComponent<
   const [specificationName, setSpecificationName] = React.useState("");
   const targetInput = React.useRef<HTMLInputElement>(null);
   const [jsonError, setJsonError] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState({
+    submitted: false,
+    success: false,
+  });
+
+  const disableSubmit = jsonError || !specificationName;
 
   async function handleUpload(): Promise<void> {
-    uploadSpecification(
+    const result = await uploadSpecification(
       textFieldInput,
       specificationName + ".json",
       true
-    ).catch((error) => {
-      console.error(error);
-    });
+    );
+    setSubmitted({ submitted: true, success: result as boolean });
   }
 
   function codeInputChange(
@@ -112,8 +122,28 @@ export const CustomSpecifications: React.FunctionComponent<
     });
   }
 
+  const iconClass = mergeStyles({
+    fontSize: 25,
+    height: 25,
+    width: 25,
+    margin: "0px 10px",
+  });
+  const classNames = mergeStyleSets({
+    success: [{ color: FluentTheme.semanticColors.successIcon }, iconClass],
+    error: [{ color: FluentTheme.semanticColors.errorIcon }, iconClass],
+  });
+
   return (
-    <Stack>
+    <Stack
+      styles={{
+        root: {
+          boxShadow: DefaultEffects.elevation4,
+          padding: 15,
+          marginBottom: 10,
+          border: "1px solid #eaeaea",
+        },
+      }}
+    >
       <Stack.Item>
         <TextField
           elementRef={targetInput}
@@ -137,9 +167,30 @@ export const CustomSpecifications: React.FunctionComponent<
         />
       </Stack.Item>
       <Stack.Item>
-        <DefaultButton onClick={handleUpload} disabled={jsonError}>
-          Upload specification
-        </DefaultButton>
+        <Stack
+          horizontal
+          verticalAlign="center"
+          styles={{ root: { marginTop: 10 } }}
+        >
+          <DefaultButton onClick={handleUpload} disabled={disableSubmit}>
+            Upload specification
+          </DefaultButton>
+          {submitted.submitted ? (
+            submitted.success ? (
+              <FontIcon
+                aria-label="Completed"
+                iconName="Completed"
+                className={classNames.success}
+              />
+            ) : (
+              <FontIcon
+                aria-label="Completed"
+                iconName="ErrorBadge"
+                className={classNames.error}
+              />
+            )
+          ) : null}
+        </Stack>
       </Stack.Item>
       {isCoachmarkVisible && (
         <Coachmark

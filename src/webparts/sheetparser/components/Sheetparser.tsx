@@ -30,6 +30,7 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
   hasTeamsContext,
   sp,
 }: ISheetparserProps) => {
+  const [result, setResult] = React.useState<IResponse | undefined>();
   const [filePath, setFilePath] = React.useState<string | undefined>();
   const [file, setFile] = React.useState<File | undefined>();
   const [specification, setSpecification] = React.useState<
@@ -44,22 +45,25 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
 
   React.useEffect(() => {
     setLoading();
-    getSpecFiles();
+    getSpecFiles().catch((e) => console.error(e));
   }, []);
 
   async function getSpecFile(fileId: string): Promise<IJsonSpec | undefined> {
-    console.log("getting spec file ", fileId);
     try {
       const json = await sp?.web.getFileById(fileId).getJSON();
       const isValidJson = isValidJsonSpec(json);
       if (isValidJson) return json;
     } catch (e) {
-      //TODO instead of console logging, we should show an error message to the user
+      setResult({
+        success: false,
+        errors: ["Specification file is invalid"],
+        file: undefined,
+      });
       console.log(e);
     }
   }
 
-  async function getSpecFiles() {
+  async function getSpecFiles(): Promise<void> {
     if (sp !== undefined) {
       const response = await sp.web
         .getFolderByServerRelativePath("Delade dokument/templates")
@@ -72,8 +76,6 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
       setNotLoading();
     }
   }
-
-  const [result, setResult] = React.useState<IResponse | undefined>();
 
   React.useMemo(() => {
     setResult(undefined);
@@ -91,7 +93,6 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
     console.log("uploading file... ");
     if (!file || !fileName) return false;
     if (!sp) return false;
-    console.log(file, fileName);
 
     const filePath = template
       ? "Delade dokument/templates"
@@ -105,12 +106,15 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
       uploadedFile = await sp.web
         .getFolderByServerRelativePath(filePath)
         .files.addUsingPath(fileName, file, { Overwrite: true });
+      return uploadedFile.LinkingUrl.length > 0
+        ? uploadedFile.LinkingUrl
+        : uploadedFile.Name;
     } else {
       uploadedFile = await sp.web
         .getFolderByServerRelativePath(filePath)
         .files.addChunked(fileName, file);
+      return uploadedFile.LinkingUrl;
     }
-    return uploadedFile.LinkingUrl;
   }
 
   return (
