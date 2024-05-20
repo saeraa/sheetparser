@@ -21,6 +21,25 @@ interface IResponse {
   errors: string[];
 }
 
+// Utility function to convert column letters to an index
+function columnToIndex(column: string): number {
+  let index = 0;
+  for (let i = 0; i < column.length; i++) {
+    index = index * 26 + (column.charCodeAt(i) - "A".charCodeAt(0) + 1);
+  }
+  return index - 1;
+}
+
+// Utility function to convert an index to column letters
+function indexToColumn(index: number): string {
+  let column = "";
+  while (index >= 0) {
+    column = String.fromCharCode((index % 26) + "A".charCodeAt(0)) + column;
+    index = Math.floor(index / 26) - 1;
+  }
+  return column;
+}
+
 // Check if a value matches the specified type
 function isValidType(value: string | number, type: string): boolean {
   if (type === "string") {
@@ -102,8 +121,14 @@ async function processFile(
           );
         }) || specifications.sheets[sheetIndex];
 
-      if (!sheetSpec || !sheetSpec.columns || sheetSpec.columns.length === 0) {
-        // Skip the sheet if there are no specified columns
+      if (!sheetSpec) {
+        response.errors.push(
+          `Worksheet: ${sheetName}: Skipping sheet - No specification provided.`
+        );
+        return;
+      }
+
+      if (!sheetSpec.columns || sheetSpec.columns.length === 0) {
         response.errors.push(
           `Worksheet: ${sheetName}: Skipping sheet - No columns specified.`
         );
@@ -126,7 +151,7 @@ async function processFile(
 
       // Loop through each column
       for (let colIndex = 0; colIndex < sheetSpec.columns.length; colIndex++) {
-        const col = String.fromCharCode(firstCol.charCodeAt(0) + colIndex);
+        const col = indexToColumn(columnToIndex(firstCol) + colIndex);
         const columnSpec = sheetSpec.columns[colIndex];
 
         // Get the first cell in the column
@@ -172,7 +197,9 @@ async function processFile(
         ) {
           const cellAddress = `${col}${rowIndex}`;
           const cellValue = worksheet[cellAddress]
-            ? worksheet[cellAddress].w
+            ? columnSpec.type === "number"
+              ? worksheet[cellAddress].v
+              : worksheet[cellAddress].w
             : undefined;
 
           if (!cellValue) continue;
@@ -190,6 +217,18 @@ async function processFile(
           }
         }
       }
+
+      const numSpecifiedColumns = sheetSpec.columns.length;
+      const numSheetColumns = range
+        ? columnToIndex(range.split(":")[1].replace(/[^a-zA-Z]/g, "")) + 1
+        : 0;
+
+      if (numSheetColumns < numSpecifiedColumns) {
+        response.success = false;
+        response.errors.push(
+          `Worksheet: ${sheetName}: Number of specified columns (${numSpecifiedColumns}) exceeds the number of columns in the sheet (${numSheetColumns}).`
+        );
+      }
     });
   } else if (extension === "csv") {
     const data = await inputFile.arrayBuffer();
@@ -199,7 +238,7 @@ async function processFile(
       const worksheet = workbook.Sheets[sheetName];
 
       const range = worksheet["!ref"];
-      
+
       response.errors.push(`Worksheet: ${sheetName}`);
 
       if (!range) {
@@ -224,7 +263,7 @@ async function processFile(
 
       // Loop through each column
       for (let colIndex = 0; colIndex < sheetSpec.columns.length; colIndex++) {
-        const col = String.fromCharCode(firstCol.charCodeAt(0) + colIndex);
+        const col = indexToColumn(columnToIndex(firstCol) + colIndex);
         const columnSpec = sheetSpec.columns[colIndex];
 
         // Get the first cell in the column
@@ -283,6 +322,18 @@ async function processFile(
             );
           }
         }
+      }
+
+      const numSpecifiedColumns = sheetSpec.columns.length;
+      const numSheetColumns = range
+        ? columnToIndex(range.split(":")[1].replace(/[^a-zA-Z]/g, "")) + 1
+        : 0;
+
+      if (numSheetColumns < numSpecifiedColumns) {
+        response.success = false;
+        response.errors.push(
+          `Worksheet: ${sheetName}: Number of specified columns (${numSpecifiedColumns}) exceeds the number of columns in the sheet (${numSheetColumns}).`
+        );
       }
     });
   } else {

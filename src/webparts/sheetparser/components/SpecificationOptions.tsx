@@ -75,7 +75,10 @@ export const SpecificationOptions: React.FunctionComponent<
   ): void => {
     setSelectedItem(item);
 
-    if (item.key === "custom") return;
+    if (item.key === "custom") {
+      setSpecification(undefined);
+      return;
+    }
 
     getSpecFile(item.key as string)
       .then((json) => {

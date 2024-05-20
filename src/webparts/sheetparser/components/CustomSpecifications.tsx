@@ -7,6 +7,8 @@ import {
   DirectionalHint,
   FluentTheme,
   FontIcon,
+  FontSizes,
+  ITeachingBubbleStyles,
   TeachingBubbleContent,
   TextField,
   mergeStyleSets,
@@ -25,6 +27,15 @@ interface ICustomSpecificationsProps {
     template?: boolean
   ) => Promise<boolean | string>;
 }
+
+const teachingBubbleStyles: Partial<ITeachingBubbleStyles> = {
+  body: {
+    "& pre": {
+      fontSize: FontSizes.small,
+    },
+  },
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidJsonSpec(obj: any): obj is IJsonSpec {
   if (!Array.isArray(obj.sheets)) {
@@ -46,12 +57,15 @@ export function isValidJsonSpec(obj: any): obj is IJsonSpec {
   return true;
 }
 const EXAMPLE_CODE = `{
+  "fileName": "optional regex of filename -
+  remove this line to not check the filename",
   "sheets": [
     {
-      "name": "Sheet1",
+      "name": "optional name of sheet -
+      remove this line to not check the sheet name",
       "columns": [
         { "name": "Column1", "type": "number" },
-        { "name": "Column2", "type": "number" },
+        { "name": "Column2", "type": "regex" },
         { "name": "Column3", "type": "string" }
       ]
     }
@@ -208,6 +222,7 @@ export const CustomSpecifications: React.FunctionComponent<
               children: "Copy example code",
               onClick: copyExampleCode,
             }}
+            styles={teachingBubbleStyles}
             hasSmallHeadline={true}
             headline="JSON specification structure"
             hasCloseButton
