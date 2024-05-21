@@ -2,20 +2,20 @@ import "@pnp/sp/files";
 import "@pnp/sp/folders";
 import "@pnp/sp/webs";
 
-import { DefaultButton, Link, Shimmer, Stack } from "@fluentui/react";
-import { IJsonSpec, IResponse } from "../../utils/sheetparser";
+import { DefaultButton, Link, Stack } from "@fluentui/react";
 
 import { IFileInfo } from "@pnp/sp/files";
+import { IJsonSpec } from "../../utils/sheetparser";
 import { ProcessFile } from "./ProcessFile";
 import React from "react";
-import { SPFI } from "@pnp/sp";
 import { SpecificationOptions } from "./SpecificationOptions";
 import { Upload } from "./Upload";
 import { ValidationError } from "./ValidationError";
 import { ValidationSuccess } from "./ValidationSuccess";
-import { isValidJsonSpec } from "./CustomSpecifications";
+import { getSP } from "../../utils/pnpjsConfig";
 import styles from "./Sheetparser.module.scss";
-import { useBoolean } from "@fluentui/react-hooks";
+import { useResultContext } from "../context/ResultContext";
+import { useSPContext } from "../context/SPContext";
 
 export interface ISheetparserProps {
   description: string;
@@ -23,66 +23,29 @@ export interface ISheetparserProps {
   environmentMessage: string;
   hasTeamsContext: boolean;
   userDisplayName: string;
-  sp: SPFI | undefined;
 }
 
 const Sheetparser: React.FC<ISheetparserProps> = ({
   hasTeamsContext,
-  sp,
 }: ISheetparserProps) => {
-  const [result, setResult] = React.useState<IResponse | undefined>();
+  const spContext = useSPContext();
+  const sp = getSP(spContext?.context);
+  const { result, setResult } = useResultContext();
+
   const [filePath, setFilePath] = React.useState<string | undefined>();
   const [file, setFile] = React.useState<File | undefined>();
   const [specification, setSpecification] = React.useState<
     IJsonSpec | undefined
   >();
-  const [loading, { setFalse: setNotLoading, setTrue: setLoading }] =
-    useBoolean(false);
-  const [specFiles, setSpecFiles] = React.useState<
-    { file: string; id: string }[]
-  >([]);
-
-  React.useEffect(() => {
-    setLoading();
-    getSpecFiles().catch((e) => console.error(e));
-  }, []);
-
-  async function getSpecFile(fileId: string): Promise<IJsonSpec | undefined> {
-    try {
-      const json = await sp?.web.getFileById(fileId).getJSON();
-      const isValidJson = isValidJsonSpec(json);
-      if (isValidJson) return json;
-    } catch (e) {
-      setResult({
-        success: false,
-        errors: ["Specification file is invalid"],
-        file: undefined,
-      });
-      console.log(e);
-    }
-  }
-
-  async function getSpecFiles(): Promise<void> {
-    if (sp !== undefined) {
-      const response = await sp.web
-        .getFolderByServerRelativePath("Delade dokument/templates")
-        .files();
-      setSpecFiles(
-        response.map((file) => {
-          return { file: file.Name, id: file.UniqueId };
-        })
-      );
-      setNotLoading();
-    }
-  }
 
   React.useMemo(() => {
     setResult(undefined);
     setFilePath(undefined);
   }, [specification, file]);
 
-  const hasResult: boolean =
-    result !== undefined && result.success !== undefined;
+  const hasResult = React.useMemo(() => {
+    return result !== undefined && result.success !== undefined;
+  }, [result]);
 
   async function uploadFile(
     file: File | string | undefined,
@@ -125,23 +88,15 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
           <Upload setFile={setFile} />
         </Stack.Item>
         <Stack.Item>
-          <Shimmer
-            isDataLoaded={!loading}
-            ariaLabel="Loading specification options..."
-          >
-            <SpecificationOptions
-              specFiles={specFiles}
-              getSpecFile={getSpecFile}
-              uploadSpecification={uploadFile}
-              setSpecification={setSpecification}
-            />
-          </Shimmer>
+          <SpecificationOptions
+            uploadSpecification={uploadFile}
+            setSpecification={setSpecification}
+          />
         </Stack.Item>
         <Stack.Item>
           <ProcessFile
             file={file ? file : undefined}
             specification={specification ? specification : undefined}
-            setResult={setResult}
           />
         </Stack.Item>
         {hasResult && result && result.success && (

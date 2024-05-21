@@ -10,6 +10,9 @@ import { IStackTokens, Stack } from "@fluentui/react/lib/Stack";
 
 import { CustomSpecifications } from "./CustomSpecifications";
 import { IJsonSpec } from "../../utils/sheetparser";
+import { Shimmer } from "@fluentui/react";
+import { useResultContext } from "../context/ResultContext";
+import { useSpecFilesContext } from "../context/FileSpecContext";
 
 const dropdownStyles: Partial<IDropdownStyles> = {
   dropdown: { width: 300 },
@@ -24,20 +27,17 @@ interface ISpecificationOptionsProps {
     fileName: string | undefined,
     template?: boolean
   ) => Promise<boolean | string>;
-  specFiles: { file: string; id: string }[];
-  getSpecFile: (fileName: string) => Promise<IJsonSpec | undefined>;
 }
 
 export const SpecificationOptions: React.FunctionComponent<
   ISpecificationOptionsProps
-> = ({
-  setSpecification,
-  uploadSpecification,
-  specFiles,
-  getSpecFile,
-}: ISpecificationOptionsProps) => {
+> = ({ setSpecification, uploadSpecification }: ISpecificationOptionsProps) => {
+  const { setResult } = useResultContext();
+
   const [selectedItem, setSelectedItem] = React.useState<IDropdownOption>();
   const [options, setOptions] = React.useState<IDropdownOption[]>([]);
+
+  const { specFiles, getSpecFile, loading } = useSpecFilesContext();
 
   function generateOptions(): void {
     const tempArray: IDropdownOption[] = [
@@ -69,6 +69,12 @@ export const SpecificationOptions: React.FunctionComponent<
 
   const isCustom = selectedItem?.key === "custom";
 
+  function setToNewCustomOption(itemId: string): void {
+    //TODO implement this
+    console.log("hi");
+  }
+  setToNewCustomOption("boo");
+
   const onChange = (
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
@@ -82,7 +88,16 @@ export const SpecificationOptions: React.FunctionComponent<
 
     getSpecFile(item.key as string)
       .then((json) => {
-        setSpecification(json);
+        if (!json) {
+          setResult({
+            success: false,
+            errors: ["Specification file is invalid"],
+            file: undefined,
+          });
+          return;
+        }
+        const data = json as IJsonSpec;
+        setSpecification(data);
       })
       .catch((e) => {
         console.log(e);
@@ -90,23 +105,28 @@ export const SpecificationOptions: React.FunctionComponent<
   };
 
   return (
-    <Stack tokens={stackTokens}>
-      <Dropdown
-        // eslint-disable-next-line react/jsx-no-bind
-        onChange={onChange}
-        placeholder="Select an option"
-        label="Choose specifications for processing file"
-        selectedKey={selectedItem ? selectedItem.key : undefined}
-        options={options}
-        styles={dropdownStyles}
-      />
-
-      {isCustom && (
-        <CustomSpecifications
-          uploadSpecification={uploadSpecification}
-          setSpecification={setSpecification}
+    <Shimmer
+      isDataLoaded={!loading}
+      ariaLabel="Loading specification options..."
+    >
+      <Stack tokens={stackTokens}>
+        <Dropdown
+          // eslint-disable-next-line react/jsx-no-bind
+          onChange={onChange}
+          placeholder="Select an option"
+          label="Choose specifications for processing file"
+          selectedKey={selectedItem ? selectedItem.key : undefined}
+          options={options}
+          styles={dropdownStyles}
         />
-      )}
-    </Stack>
+
+        {isCustom && (
+          <CustomSpecifications
+            uploadSpecification={uploadSpecification}
+            setSpecification={setSpecification}
+          />
+        )}
+      </Stack>
+    </Shimmer>
   );
 };

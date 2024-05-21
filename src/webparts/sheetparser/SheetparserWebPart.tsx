@@ -7,11 +7,14 @@ import {
 } from "@microsoft/sp-property-pane";
 import { BaseClientSideWebPart } from "@microsoft/sp-webpart-base";
 import { IReadonlyTheme } from "@microsoft/sp-component-base";
-import { getSP } from "../utils/pnpjsConfig";
+//import { getSP } from "../utils/pnpjsConfig";
 
 import * as strings from "SheetparserWebPartStrings";
 import Sheetparser from "./components/Sheetparser";
 import { ISheetparserProps } from "./components/Sheetparser";
+import { SpecFilesProvider } from "./context/FileSpecContext";
+import { SPContextProvider } from "./context/SPContext";
+import { ResultContextProvider } from "./context/ResultContext";
 
 export interface ISheetparserWebPartProps {
   description: string;
@@ -25,7 +28,7 @@ export default class SheetparserWebPart extends BaseClientSideWebPart<ISheetpars
     const element: React.ReactElement<ISheetparserProps> = React.createElement(
       Sheetparser,
       {
-        sp: getSP(this.context),
+        //sp: getSP(this.context),
         description: this.properties.description,
         isDarkTheme: this._isDarkTheme,
         environmentMessage: this._environmentMessage,
@@ -34,7 +37,15 @@ export default class SheetparserWebPart extends BaseClientSideWebPart<ISheetpars
       }
     );
 
-    ReactDom.render(element, this.domElement);
+    const wrapperObject = (
+      <SPContextProvider context={this.context}>
+        <ResultContextProvider>
+          <SpecFilesProvider>{element}</SpecFilesProvider>
+        </ResultContextProvider>
+      </SPContextProvider>
+    );
+
+    ReactDom.render(wrapperObject, this.domElement);
   }
 
   protected onInit(): Promise<void> {

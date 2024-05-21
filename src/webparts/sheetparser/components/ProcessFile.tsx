@@ -1,18 +1,20 @@
 import * as React from "react";
 
 import { PrimaryButton, Spinner } from "@fluentui/react";
-import processFile, { IJsonSpec, IResponse } from "../../utils/sheetparser";
+import processFile, { IJsonSpec } from "../../utils/sheetparser";
+
+import { useResultContext } from "../context/ResultContext";
 
 interface IProcessFileProps {
   file: File | undefined;
   specification: IJsonSpec | undefined;
-  setResult: (result: IResponse) => void;
 }
 
 export const ProcessFile: React.FunctionComponent<IProcessFileProps> = (
   props: IProcessFileProps
 ) => {
-  const { file, specification, setResult } = props;
+  const { file, specification } = props;
+  const { setResult } = useResultContext();
   const [loading, setLoading] = React.useState(false);
 
   async function handleSubmit(file: File | undefined): Promise<void> {
