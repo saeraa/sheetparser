@@ -22,16 +22,11 @@ const stackTokens: IStackTokens = { childrenGap: 20 };
 
 interface ISpecificationOptionsProps {
   setSpecification: React.Dispatch<React.SetStateAction<IJsonSpec | undefined>>;
-  uploadSpecification: (
-    file: File | string | undefined,
-    fileName: string | undefined,
-    template?: boolean
-  ) => Promise<boolean | string>;
 }
 
 export const SpecificationOptions: React.FunctionComponent<
   ISpecificationOptionsProps
-> = ({ setSpecification, uploadSpecification }: ISpecificationOptionsProps) => {
+> = ({ setSpecification }: ISpecificationOptionsProps) => {
   const { setResult } = useResultContext();
 
   const [selectedItem, setSelectedItem] = React.useState<IDropdownOption>();
@@ -70,10 +65,9 @@ export const SpecificationOptions: React.FunctionComponent<
   const isCustom = selectedItem?.key === "custom";
 
   function setToNewCustomOption(itemId: string): void {
-    //TODO implement this
-    console.log("hi");
+    const newItem = options.find((option) => option.key === itemId);
+    setSelectedItem(newItem);
   }
-  setToNewCustomOption("boo");
 
   const onChange = (
     event: React.FormEvent<HTMLDivElement>,
@@ -122,7 +116,7 @@ export const SpecificationOptions: React.FunctionComponent<
 
         {isCustom && (
           <CustomSpecifications
-            uploadSpecification={uploadSpecification}
+            setToNewCustomOption={setToNewCustomOption}
             setSpecification={setSpecification}
           />
         )}

@@ -9,7 +9,7 @@ import { IJsonSpec } from "../../utils/sheetparser";
 import { ProcessFile } from "./ProcessFile";
 import React from "react";
 import { SpecificationOptions } from "./SpecificationOptions";
-import { Upload } from "./Upload";
+import { Upload } from "./UploadFile";
 import { ValidationError } from "./ValidationError";
 import { ValidationSuccess } from "./ValidationSuccess";
 import { getSP } from "../../utils/pnpjsConfig";
@@ -49,16 +49,12 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
 
   async function uploadFile(
     file: File | string | undefined,
-    fileName: string | undefined,
-    template: boolean = false
+    fileName: string | undefined
   ): Promise<boolean | string> {
-    console.log("uploading file... ");
     if (!file || !fileName) return false;
     if (!sp) return false;
 
-    const filePath = template
-      ? "Delade dokument/templates"
-      : "Delade dokument/documents";
+    const filePath = "Delade dokument/documents";
 
     setFilePath(undefined);
 
@@ -88,10 +84,7 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
           <Upload setFile={setFile} />
         </Stack.Item>
         <Stack.Item>
-          <SpecificationOptions
-            uploadSpecification={uploadFile}
-            setSpecification={setSpecification}
-          />
+          <SpecificationOptions setSpecification={setSpecification} />
         </Stack.Item>
         <Stack.Item>
           <ProcessFile

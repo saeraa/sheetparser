@@ -17,16 +17,27 @@ import {
 
 import { IJsonSpec } from "../../utils/sheetparser";
 import { Stack } from "@fluentui/react/lib/Stack";
+import { getSP } from "../../utils/pnpjsConfig";
 import { useBoolean } from "@fluentui/react-hooks";
+import { useSPContext } from "../context/SPContext";
+import { useSpecFilesContext } from "../context/FileSpecContext";
 
 interface ICustomSpecificationsProps {
   setSpecification: React.Dispatch<React.SetStateAction<IJsonSpec | undefined>>;
-  uploadSpecification: (
-    file: File | string | undefined,
-    fileName: string | undefined,
-    template?: boolean
-  ) => Promise<boolean | string>;
+  setToNewCustomOption: (id: string) => void;
 }
+
+const iconClass = mergeStyles({
+  fontSize: 25,
+  height: 25,
+  width: 25,
+  margin: "0px 10px",
+});
+
+const classNames = mergeStyleSets({
+  success: [{ color: FluentTheme.semanticColors.successIcon }, iconClass],
+  error: [{ color: FluentTheme.semanticColors.errorIcon }, iconClass],
+});
 
 const teachingBubbleStyles: Partial<ITeachingBubbleStyles> = {
   body: {
@@ -74,7 +85,10 @@ const EXAMPLE_CODE = `{
 
 export const CustomSpecifications: React.FunctionComponent<
   ICustomSpecificationsProps
-> = ({ setSpecification, uploadSpecification }: ICustomSpecificationsProps) => {
+> = ({
+  setSpecification,
+  setToNewCustomOption,
+}: ICustomSpecificationsProps) => {
   const [
     isCoachmarkVisible,
     { setFalse: hideCoachmark, setTrue: showCoachmark },
@@ -87,16 +101,40 @@ export const CustomSpecifications: React.FunctionComponent<
     submitted: false,
     success: false,
   });
+  const { init } = useSpecFilesContext();
+  const spContext = useSPContext();
+  const sp = getSP(spContext?.context);
 
   const disableSubmit = jsonError || !specificationName;
+
+  const uploadSpecification = async (
+    file: string | undefined,
+    fileName: string | undefined
+  ): Promise<string> => {
+    if (!file || !fileName) return "false";
+    if (!sp) return "false";
+
+    const filePath = "Delade dokument/templates";
+
+    const uploadedFile = await sp.web
+      .getFolderByServerRelativePath(filePath)
+      .files.addUsingPath(fileName, file, { Overwrite: true });
+    return uploadedFile.UniqueId;
+  };
 
   async function handleUpload(): Promise<void> {
     const result = await uploadSpecification(
       textFieldInput,
-      specificationName + ".json",
-      true
+      specificationName + ".json"
     );
-    setSubmitted({ submitted: true, success: result as boolean });
+    setSubmitted({ submitted: true, success: !!result as boolean });
+
+    setTimeout(() => {
+      init().catch((e) => console.error(e));
+      setTimeout(() => {
+        setToNewCustomOption(result);
+      }, 1500);
+    }, 1500);
   }
 
   function codeInputChange(
@@ -135,17 +173,6 @@ export const CustomSpecifications: React.FunctionComponent<
       console.error(error);
     });
   }
-
-  const iconClass = mergeStyles({
-    fontSize: 25,
-    height: 25,
-    width: 25,
-    margin: "0px 10px",
-  });
-  const classNames = mergeStyleSets({
-    success: [{ color: FluentTheme.semanticColors.successIcon }, iconClass],
-    error: [{ color: FluentTheme.semanticColors.errorIcon }, iconClass],
-  });
 
   return (
     <Stack

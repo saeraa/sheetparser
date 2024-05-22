@@ -31,7 +31,7 @@ const SpecFilesProvider: React.FC = ({ children }) => {
   >([]);
 
   React.useEffect((): void => {
-    init();
+    init().catch((e) => console.error(e));
   }, []);
 
   async function init(): Promise<void> {
