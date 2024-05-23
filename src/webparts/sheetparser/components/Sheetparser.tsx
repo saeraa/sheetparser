@@ -64,9 +64,7 @@ const Sheetparser: React.FC<ISheetparserProps> = ({
       uploadedFile = await sp.web
         .getFolderByServerRelativePath(filePath)
         .files.addUsingPath(fileName, file, { Overwrite: true });
-      return uploadedFile.LinkingUrl.length > 0
-        ? uploadedFile.LinkingUrl
-        : uploadedFile.Name;
+      return uploadedFile.LinkingUrl;
     } else {
       uploadedFile = await sp.web
         .getFolderByServerRelativePath(filePath)

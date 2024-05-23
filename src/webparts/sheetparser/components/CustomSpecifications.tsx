@@ -133,8 +133,8 @@ export const CustomSpecifications: React.FunctionComponent<
       init().catch((e) => console.error(e));
       setTimeout(() => {
         setToNewCustomOption(result);
-      }, 1500);
-    }, 1500);
+      }, 500);
+    }, 500);
   }
 
   function codeInputChange(

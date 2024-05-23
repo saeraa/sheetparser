@@ -7,7 +7,6 @@ import {
 } from "@microsoft/sp-property-pane";
 import { BaseClientSideWebPart } from "@microsoft/sp-webpart-base";
 import { IReadonlyTheme } from "@microsoft/sp-component-base";
-//import { getSP } from "../utils/pnpjsConfig";
 
 import * as strings from "SheetparserWebPartStrings";
 import Sheetparser from "./components/Sheetparser";
