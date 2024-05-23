@@ -2,9 +2,10 @@
 
 ## Summary
 
-Short summary on functionality and used technologies.
+XLSX/CSV parser webpart with json specification input to validate files according to the supplied format. Using pnpjs to upload/download files and SheetJS for the reading of excel files. Written in TypeScript, using React, styled with FluentUI.
 
-[picture of the solution in action, if possible]
+![image](https://github.com/saeraa/sheetparser/assets/99484730/a39614ff-52a4-4c2c-8ae5-82127ab7c923)
+
 
 ## Used SharePoint Framework Version
 
