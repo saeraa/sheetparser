@@ -133,7 +133,7 @@ export const CustomSpecifications: React.FunctionComponent<
       init().catch((e) => console.error(e));
       setTimeout(() => {
         setToNewCustomOption(result);
-      }, 500);
+      }, 1500);
     }, 500);
   }
 
